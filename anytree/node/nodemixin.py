@@ -3,12 +3,13 @@
 import warnings
 
 from anytree.iterators import PreOrderIter
+import persistent
 
 from .exceptions import LoopError
 from .exceptions import TreeError
 
 
-class NodeMixin(object):
+class NodeMixin(persistent.Persistent):
 
     __slots__ = ("__parent", "__children")
 
