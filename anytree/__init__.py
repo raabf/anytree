@@ -2,7 +2,7 @@
 
 """Powerful and Lightweight Python Tree Data Structure."""
 
-__version__ = "2.6.0"
+__version__ = "2.7.2"
 __author__ = "c0fec0de"
 __author_email__ = "c0fec0de@gmail.com"
 __description__ = """Powerful and Lightweight Python Tree Data Structure.."""
@@ -34,8 +34,10 @@ from .resolver import Resolver  # noqa
 from .resolver import ResolverError  # noqa
 from .walker import WalkError  # noqa
 from .walker import Walker  # noqa
+from . import cachedsearch  # noqa
 from . import util  # noqa
 
 
 # legacy
 LevelGroupOrderIter = LevelOrderGroupIter
+

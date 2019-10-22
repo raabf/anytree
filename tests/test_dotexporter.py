@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from filecmp import cmp
+from nose.tools import eq_
 from nose.tools import with_setup
 from os import makedirs
 from os.path import dirname
@@ -36,7 +37,7 @@ def test_tree1():
     Node("sub1A", parent=s1)
     Node("sub1B", parent=s1)
     s1c = Node("sub1C", parent=s1)
-    Node("sub1Ca", parent=s1c)
+    Node(99, parent=s1c)
 
     DotExporter(root).to_dotfile(join(GENPATH, "tree1.dot"))
     assert cmp(join(GENPATH, "tree1.dot"), join(REFPATH, "tree1.dot"))
@@ -110,3 +111,13 @@ def test_tree_png():
     Node("sub1Ca", parent=s1c)
 
     DotExporter(root).to_picture(join(GENPATH, "tree1.png"))
+
+
+def test_esc():
+    """Test proper escape of quotes."""
+    n = Node(r'6"-6\"')
+    eq_(tuple(DotExporter(n)), (
+        r'digraph tree {',
+        r'    "6\"-6\\\"";',
+        r'}'
+    ))

@@ -11,8 +11,6 @@ from .exceptions import TreeError
 
 class NodeMixin(persistent.Persistent):
 
-    __slots__ = ("__parent", "__children")
-
     separator = "/"
 
     u"""
@@ -23,11 +21,12 @@ class NodeMixin(persistent.Persistent):
     If set to another node, the :any:`NodeMixin` becomes the child of it.
 
     The `children` attribute can be used likewise.
-    If `None` the :any:`NodeMixin` has no children (unless the node is set *as* parent).
-    If set to any iterable of :any:`NodeMixin` instances, the nodes become children.
+    If `None` the :any:`NodeMixin` has no children.
+    The `children` attribute can be set to any iterable of :any:`NodeMixin` instances.
+    These instances become children of the node.
 
     >>> from anytree import NodeMixin, RenderTree
-    >>> class MyBaseClass(object):
+    >>> class MyBaseClass(object):  # Just an example of a base class
     ...     foo = 4
     >>> class MyClass(MyBaseClass, NodeMixin):  # Add Node feature
     ...     def __init__(self, name, length, width, parent=None, children=None):
@@ -141,7 +140,7 @@ class NodeMixin(persistent.Persistent):
             if node is self:
                 msg = "Cannot set parent. %r cannot be parent of itself."
                 raise LoopError(msg % self)
-            if self in node.path:
+            if self in node.iter_path_reverse():
                 msg = "Cannot set parent. %r is parent of %r."
                 raise LoopError(msg % (self, node))
 
@@ -149,7 +148,7 @@ class NodeMixin(persistent.Persistent):
         if parent is not None:
             self._pre_detach(parent)
             parentchildren = parent.__children_
-            assert any([child is self for child in parentchildren]), "Tree internal data is corrupt."
+            assert any(child is self for child in parentchildren), "Tree internal data is corrupt."  # pragma: no cover
             # ATOMIC START
             parentchildren.remove(self)
             self.__parent = None
@@ -160,7 +159,7 @@ class NodeMixin(persistent.Persistent):
         if parent is not None:
             self._pre_attach(parent)
             parentchildren = parent.__children_
-            assert not any([child is self for child in parentchildren]), "Tree internal data is corrupt."
+            assert not any(child is self for child in parentchildren), "Tree internal data is corrupt."  # pragma: no cover
             # ATOMIC START
             parentchildren.append(self)
             self.__parent = parent
@@ -302,14 +301,35 @@ class NodeMixin(persistent.Persistent):
         """
         return self._path
 
-    @property
-    def _path(self):
-        path = []
+    def iter_path_reverse(self):
+        """
+        Iterate up the tree from the current node.
+
+        >>> from anytree import Node
+        >>> udo = Node("Udo")
+        >>> marc = Node("Marc", parent=udo)
+        >>> lian = Node("Lian", parent=marc)
+        >>> for node in udo.iter_path_reverse():
+        ...     print(node)
+        Node('/Udo')
+        >>> for node in marc.iter_path_reverse():
+        ...     print(node)
+        Node('/Udo/Marc')
+        Node('/Udo')
+        >>> for node in lian.iter_path_reverse():
+        ...     print(node)
+        Node('/Udo/Marc/Lian')
+        Node('/Udo/Marc')
+        Node('/Udo')
+        """
         node = self
         while node:
-            path.insert(0, node)
+            yield node
             node = node.parent
-        return tuple(path)
+
+    @property
+    def _path(self):
+        return tuple(reversed(list(self.iter_path_reverse())))
 
     @property
     def ancestors(self):
@@ -327,7 +347,9 @@ class NodeMixin(persistent.Persistent):
         >>> lian.ancestors
         (Node('/Udo'), Node('/Udo/Marc'))
         """
-        return self._path[:-1]
+        if not self.parent:
+            return tuple()
+        return self.parent.path
 
     @property
     def anchestors(self):
@@ -335,7 +357,7 @@ class NodeMixin(persistent.Persistent):
         All parent nodes and their parent nodes - see :any:`ancestors`.
 
         The attribute `anchestors` is just a typo of `ancestors`. Please use `ancestors`.
-        This attribute will be removed in the 2.0.0 release.
+        This attribute will be removed in the 3.0.0 release.
         """
         warnings.warn(".anchestors was a typo and will be removed in version 3.0.0", DeprecationWarning)
         return self.ancestors
@@ -376,10 +398,10 @@ class NodeMixin(persistent.Persistent):
         >>> lian.root
         Node('/Udo')
         """
-        if self.parent:
-            return self._path[0]
-        else:
-            return self
+        node = self
+        while node.parent:
+            node = node.parent
+        return node
 
     @property
     def siblings(self):
@@ -405,7 +427,7 @@ class NodeMixin(persistent.Persistent):
         if parent is None:
             return tuple()
         else:
-            return tuple([node for node in parent.children if node != self])
+            return tuple(node for node in parent.children if node != self)
 
     @property
     def leaves(self):
@@ -478,7 +500,7 @@ class NodeMixin(persistent.Persistent):
         0
         """
         if self.__children_:
-            return max([child.height for child in self.__children_]) + 1
+            return max(child.height for child in self.__children_) + 1
         else:
             return 0
 
@@ -498,7 +520,9 @@ class NodeMixin(persistent.Persistent):
         >>> lian.depth
         2
         """
-        return len(self._path) - 1
+        for i, _ in enumerate(self.iter_path_reverse()):
+            continue
+        return i
 
     def _pre_detach(self, parent):
         """Method call before detaching from `parent`."""

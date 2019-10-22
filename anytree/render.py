@@ -271,9 +271,9 @@ class RenderTree(object):
         yield RenderTree.__item(node, continues, self.style)
         children = node.children
         if children:
-            lastidx = len(children) - 1
-            for idx, child in enumerate(self.childiter(children)):
-                for grandchild in self.__next(child, continues + (idx != lastidx, )):
+            children = self.childiter(children)
+            for child, is_last in _is_last(children):
+                for grandchild in self.__next(child, continues + (not is_last, )):
                     yield grandchild
 
     @staticmethod
@@ -300,7 +300,32 @@ class RenderTree(object):
         return "%s(%s)" % (classname, ", ".join(args))
 
     def by_attr(self, attrname="name"):
-        """Return rendered tree with node attribute `attrname`."""
+        """
+        Return rendered tree with node attribute `attrname`.
+
+        >>> from anytree import AnyNode, RenderTree
+        >>> root = AnyNode(id="root")
+        >>> s0 = AnyNode(id="sub0", parent=root)
+        >>> s0b = AnyNode(id="sub0B", parent=s0, foo=4, bar=109)
+        >>> s0a = AnyNode(id="sub0A", parent=s0)
+        >>> s1 = AnyNode(id="sub1", parent=root)
+        >>> s1a = AnyNode(id="sub1A", parent=s1)
+        >>> s1b = AnyNode(id="sub1B", parent=s1, bar=8)
+        >>> s1c = AnyNode(id="sub1C", parent=s1)
+        >>> s1ca = AnyNode(id="sub1Ca", parent=s1c)
+        >>> print(RenderTree(root).by_attr('id'))
+        root
+        ├── sub0
+        │   ├── sub0B
+        │   └── sub0A
+        └── sub1
+            ├── sub1A
+            ├── sub1B
+            └── sub1C
+                └── sub1Ca
+
+
+        """
         def get():
             for pre, fill, node in self:
                 attr = attrname(node) if callable(attrname) else getattr(node, attrname, "")
@@ -312,3 +337,21 @@ class RenderTree(object):
                 for line in lines[1:]:
                     yield u"%s%s" % (fill, line)
         return "\n".join(get())
+
+
+def _is_last(iterable):
+    iter_ = iter(iterable)
+    try:
+        nextitem = next(iter_)
+    except StopIteration:
+        pass
+    else:
+        item = nextitem
+        while True:
+            try:
+                nextitem = next(iter_)
+                yield item, False
+            except StopIteration:
+                yield nextitem, True
+                break
+            item = nextitem

@@ -11,17 +11,14 @@ Any Python Tree Data
 .. image:: https://coveralls.io/repos/github/c0fec0de/anytree/badge.svg
     :target: https://coveralls.io/github/c0fec0de/anytree
 
-.. image:: https://readthedocs.org/projects/anytree/badge/?version=2.6.0
-    :target: http://anytree.readthedocs.io/en/2.6.0/?badge=2.6.0
+.. image:: https://readthedocs.org/projects/anytree/badge/?version=2.7.2
+    :target: http://anytree.readthedocs.io/en/2.7.2/?badge=2.7.2
 
 .. image:: https://codeclimate.com/github/c0fec0de/anytree.png
     :target: https://codeclimate.com/github/c0fec0de/anytree
 
 .. image:: https://img.shields.io/pypi/pyversions/anytree.svg
    :target: https://pypi.python.org/pypi/anytree
-
-.. image:: https://landscape.io/github/c0fec0de/anytree/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/c0fec0de/anytree/master
 
 .. image:: https://img.shields.io/badge/code%20style-pep8-brightgreen.svg
    :target: https://www.python.org/dev/peps/pep-0008/
@@ -134,3 +131,45 @@ Node('/Dan')
 ├── Node('/Dan/Jet')
 ├── Node('/Dan/Jan')
 └── Node('/Dan/Joe')
+
+**Extending any python class to become a tree node**
+
+>>> from anytree import NodeMixin, RenderTree
+>>> class MyBaseClass(object):  # Just an example of a base class
+...     foo = 4
+>>> class MyClass(MyBaseClass, NodeMixin):  # Add Node feature
+...     def __init__(self, name, length, width, parent=None, children=None):
+...         super(MyClass, self).__init__()
+...         self.name = name
+...         self.length = length
+...         self.width = width
+...         self.parent = parent
+...         if children:
+...             self.children = children
+
+Just set the `parent` attribute to reflect the tree relation:
+
+>>> my0 = MyClass('my0', 0, 0)
+>>> my1 = MyClass('my1', 1, 0, parent=my0)
+>>> my2 = MyClass('my2', 0, 2, parent=my0)
+
+>>> for pre, fill, node in RenderTree(my0):
+...     treestr = u"%s%s" % (pre, node.name)
+...     print(treestr.ljust(8), node.length, node.width)
+my0      0 0
+├── my1  1 0
+└── my2  0 2
+
+The `children` can be used likewise:
+
+>>> my0 = MyClass('my0', 0, 0, children=[
+...     MyClass('my1', 1, 0),
+...     MyClass('my2', 0, 2),
+... ]
+
+>>> for pre, fill, node in RenderTree(my0):
+...     treestr = u"%s%s" % (pre, node.name)
+...     print(treestr.ljust(8), node.length, node.width)
+my0      0 0
+├── my1  1 0
+└── my2  0 2

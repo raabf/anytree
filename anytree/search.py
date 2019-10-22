@@ -1,4 +1,9 @@
-"""Node Searching."""
+"""
+Node Searching.
+
+.. note:: You can speed-up node searching, by installing https://pypi.org/project/fastcache/ and 
+          using :any:`cachedsearch`.
+"""
 
 from anytree.iterators import PreOrderIter
 
@@ -15,7 +20,7 @@ def findall(node, filter_=None, stop=None, maxlevel=None, mincount=None, maxcoun
     Keyword Args:
         filter_: function called with every `node` as argument, `node` is returned if `True`.
         stop: stop iteration at `node` if `stop` function returns `True` for `node`.
-        maxlevel (int): maximum decending in the node hierarchy.
+        maxlevel (int): maximum descending in the node hierarchy.
         mincount (int): minimum number of nodes.
         maxcount (int): maximum number of nodes.
 
@@ -74,7 +79,7 @@ def findall_by_attr(node, value, name="name", maxlevel=None, mincount=None, maxc
 
     Keyword Args:
         name (str): attribute name need to match
-        maxlevel (int): maximum decending in the node hierarchy.
+        maxlevel (int): maximum descending in the node hierarchy.
         mincount (int): minimum number of nodes.
         maxcount (int): maximum number of nodes.
 
@@ -120,7 +125,7 @@ def find(node, filter_=None, stop=None, maxlevel=None):
     Keyword Args:
         filter_: function called with every `node` as argument, `node` is returned if `True`.
         stop: stop iteration at `node` if `stop` function returns `True` for `node`.
-        maxlevel (int): maximum decending in the node hierarchy.
+        maxlevel (int): maximum descending in the node hierarchy.
 
     Example tree:
 
@@ -169,7 +174,7 @@ def find_by_attr(node, value, name="name", maxlevel=None):
 
     Keyword Args:
         name (str): attribute name need to match
-        maxlevel (int): maximum decending in the node hierarchy.
+        maxlevel (int): maximum descending in the node hierarchy.
 
     Example tree:
 
