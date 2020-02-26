@@ -5,14 +5,17 @@ Any Python Tree Data
 .. image:: https://badge.fury.io/py/anytree.svg
     :target: https://badge.fury.io/py/anytree
 
+.. image:: https://img.shields.io/pypi/dm/anytree.svg?label=pypi%20downloads
+   :target: https://pypi.python.org/pypi/anytree
+
 .. image:: https://travis-ci.org/c0fec0de/anytree.svg?branch=master
     :target: https://travis-ci.org/c0fec0de/anytree
 
 .. image:: https://coveralls.io/repos/github/c0fec0de/anytree/badge.svg
     :target: https://coveralls.io/github/c0fec0de/anytree
 
-.. image:: https://readthedocs.org/projects/anytree/badge/?version=2.7.2
-    :target: http://anytree.readthedocs.io/en/2.7.2/?badge=2.7.2
+.. image:: https://readthedocs.org/projects/anytree/badge/?version=2.8.0
+    :target: http://anytree.readthedocs.io/en/2.8.0/?badge=2.8.0
 
 .. image:: https://codeclimate.com/github/c0fec0de/anytree.png
     :target: https://codeclimate.com/github/c0fec0de/anytree
@@ -28,7 +31,7 @@ Any Python Tree Data
 
 Simple, lightweight and extensible Tree_ data structure.
 
-Feel free to share_ infos about your anytree project.
+Feel free to share_ info about your anytree project.
 
 .. _share: https://github.com/c0fec0de/anytree/issues/34
 
@@ -42,6 +45,32 @@ Feel free to share_ infos about your anytree project.
    exporter
    tricks
 
+
+Links
+=====
+
+* Documentation_
+* GitHub_
+* PyPI_
+* Changelog_
+* Issues_
+* Contributors_
+* If you enjoy anytree_
+
+  .. image:: https://cdn.buymeacoffee.com/buttons/default-orange.png
+     :width: 150
+     :target: https://www.buymeacoffee.com/1oYX0sw
+
+Feel free to share_ info about your anytree project.
+
+.. _anytree: http://anytree.readthedocs.io/en/2.8.0/
+.. _Documentation: http://anytree.readthedocs.io/en/2.8.0/
+.. _GitHub: https://github.com/c0fec0de/anytree
+.. _PyPI: https://pypi.org/project/anytree/2.8.0/
+.. _Changelog: https://github.com/c0fec0de/anytree/releases
+.. _Issues: https://github.com/c0fec0de/anytree/issues
+.. _Contributors: https://github.com/c0fec0de/anytree/graphs/contributors
+.. _share: https://github.com/c0fec0de/anytree/issues/34
 .. _Tree: https://en.wikipedia.org/wiki/Tree_(data_structure)
 
 Getting started
@@ -81,11 +110,24 @@ Udo
     ├── Jan
     └── Joe
 
+For details see :any:`Node` and :any:`RenderTree`.
+
+**Visualization**
+
 >>> from anytree.exporter import DotExporter
 >>> # graphviz needs to be installed for the next line!
 >>> DotExporter(udo).to_picture("udo.png")
 
 .. image:: static/udo.png
+
+The :any:`DotExporter` can be started at any node and has various formatting hookups:
+
+>>> DotExporter(dan,
+...             nodeattrfunc=lambda node: "fixedsize=true, width=1, height=1, shape=diamond",
+...             edgeattrfunc=lambda parent, child: "style=bold"
+... ).to_picture("dan.png")
+
+.. image:: static/dan.png
 
 **Manipulation**
 
@@ -134,6 +176,9 @@ Node('/Dan')
 
 **Extending any python class to become a tree node**
 
+The enitre tree magic is encapsulated by :any:`NodeMixin`,
+add it as base class and the class becomes a tree node:
+
 >>> from anytree import NodeMixin, RenderTree
 >>> class MyBaseClass(object):  # Just an example of a base class
 ...     foo = 4
@@ -144,7 +189,7 @@ Node('/Dan')
 ...         self.length = length
 ...         self.width = width
 ...         self.parent = parent
-...         if children:
+...         if children:  # set children only if given
 ...             self.children = children
 
 Just set the `parent` attribute to reflect the tree relation:
@@ -165,7 +210,7 @@ The `children` can be used likewise:
 >>> my0 = MyClass('my0', 0, 0, children=[
 ...     MyClass('my1', 1, 0),
 ...     MyClass('my2', 0, 2),
-... ]
+... ])
 
 >>> for pre, fill, node in RenderTree(my0):
 ...     treestr = u"%s%s" % (pre, node.name)

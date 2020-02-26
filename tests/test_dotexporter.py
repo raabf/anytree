@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from filecmp import cmp
-from nose.tools import eq_
-from nose.tools import with_setup
 from os import makedirs
 from os.path import dirname
 from os.path import exists
 from os.path import join
 from shutil import rmtree
+
+from nose.tools import eq_
+from nose.tools import with_setup
 
 from anytree import Node
 from anytree.exporter import DotExporter
@@ -95,6 +96,23 @@ def test_tree3():
 
     r.to_dotfile(join(GENPATH, "tree3.dot"))
     assert cmp(join(GENPATH, "tree3.dot"), join(REFPATH, "tree3.dot"))
+
+
+@with_setup(setup, teardown)
+def test_tree4():
+    """Maxlevel."""
+    root = Node("root")
+    s0 = Node("sub0", parent=root)
+    Node("sub0B", parent=s0)
+    Node("sub0A", parent=s0)
+    s1 = Node("sub1", parent=root)
+    Node("sub1A", parent=s1)
+    Node("sub1B", parent=s1)
+    s1c = Node("sub1C", parent=s1)
+    Node(99, parent=s1c)
+
+    DotExporter(root, maxlevel=2).to_dotfile(join(GENPATH, "tree4.dot"))
+    assert cmp(join(GENPATH, "tree4.dot"), join(REFPATH, "tree4.dot"))
 
 
 @with_setup(setup, teardown)

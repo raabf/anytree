@@ -1,12 +1,11 @@
-"""
-Powerful and Lightweight Python Tree Data Structure with various plugins.
-"""
+"""Powerful and Lightweight Python Tree Data Structure with various plugins."""
 
-# Always prefer setuptools over distutils
-from setuptools import setup
 # To use a consistent encoding
 from codecs import open
 from os import path
+
+# Always prefer setuptools over distutils
+from setuptools import setup
 
 
 def _read_metainfo(filepath):
@@ -35,13 +34,14 @@ config['classifiers'] = [
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
 ]
 config['keywords'] = 'tree, tree data, treelib, tree walk, tree structure'
 config['packages'] = ['anytree', 'anytree.node', 'anytree.iterators',
                       'anytree.importer', 'anytree.exporter', 'anytree.util']
 config['install_requires'] = ['six>=1.9.0']
 config['extras_require'] = {
-        'fastcache':  ['fastcache'],
+    'fastcache':  ['fastcache'],
 }
 config['extras_require'] = {
     'dev': ['check-manifest'],
@@ -49,6 +49,7 @@ config['extras_require'] = {
 }
 config['tests_require'] = ['nose']
 config['test_suite'] = 'nose.collector'
+config['data_files'] = [('', ['LICENSE'])]
 
 # Get the long description from the README file
 here = path.abspath(path.dirname(__file__))

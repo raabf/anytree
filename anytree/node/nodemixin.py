@@ -124,7 +124,7 @@ class NodeMixin(persistent.Persistent):
     @parent.setter
     def parent(self, value):
         if value is not None and not isinstance(value, NodeMixin):
-            msg = "Parent node %r is not of type 'NodeMixin'." % (value)
+            msg = "Parent node %r is not of type 'NodeMixin'." % value
             raise TreeError(msg)
         try:
             parent = self.__parent
@@ -140,17 +140,17 @@ class NodeMixin(persistent.Persistent):
             if node is self:
                 msg = "Cannot set parent. %r cannot be parent of itself."
                 raise LoopError(msg % self)
-            if self in node.iter_path_reverse():
+            if any(child is self for child in node.iter_path_reverse()):
                 msg = "Cannot set parent. %r is parent of %r."
                 raise LoopError(msg % (self, node))
 
     def __detach(self, parent):
         if parent is not None:
             self._pre_detach(parent)
-            parentchildren = parent.__children_
-            assert any(child is self for child in parentchildren), "Tree internal data is corrupt."  # pragma: no cover
+            parentchildren = parent.__children_or_empty
+            assert any(child is self for child in parentchildren), "Tree is corrupt."  # pragma: no cover
             # ATOMIC START
-            parentchildren.remove(self)
+            parent.__children = [child for child in parentchildren if child is not self]
             self.__parent = None
             # ATOMIC END
             self._post_detach(parent)
@@ -158,8 +158,8 @@ class NodeMixin(persistent.Persistent):
     def __attach(self, parent):
         if parent is not None:
             self._pre_attach(parent)
-            parentchildren = parent.__children_
-            assert not any(child is self for child in parentchildren), "Tree internal data is corrupt."  # pragma: no cover
+            parentchildren = parent.__children_or_empty
+            assert not any(child is self for child in parentchildren), "Tree is corrupt."  # pragma: no cover
             # ATOMIC START
             parentchildren.append(self)
             self.__parent = parent
@@ -167,7 +167,7 @@ class NodeMixin(persistent.Persistent):
             self._post_attach(parent)
 
     @property
-    def __children_(self):
+    def __children_or_empty(self):
         try:
             return self.__children
         except AttributeError:
@@ -223,18 +223,18 @@ class NodeMixin(persistent.Persistent):
             ...
         anytree.node.exceptions.TreeError: Cannot add node Node('/n/a') multiple times as child.
         """
-        return tuple(self.__children_)
+        return tuple(self.__children_or_empty)
 
     @staticmethod
     def __check_children(children):
         seen = set()
         for child in children:
             if not isinstance(child, NodeMixin):
-                msg = ("Cannot add non-node object %r. "
-                       "It is not a subclass of 'NodeMixin'.") % child
+                msg = "Cannot add non-node object %r. It is not a subclass of 'NodeMixin'." % child
                 raise TreeError(msg)
-            if child not in seen:
-                seen.add(child)
+            childid = id(child)
+            if childid not in seen:
+                seen.add(childid)
             else:
                 msg = "Cannot add node %r multiple times as child." % child
                 raise TreeError(msg)
@@ -323,7 +323,7 @@ class NodeMixin(persistent.Persistent):
         Node('/Udo')
         """
         node = self
-        while node:
+        while node is not None:
             yield node
             node = node.parent
 
@@ -347,7 +347,7 @@ class NodeMixin(persistent.Persistent):
         >>> lian.ancestors
         (Node('/Udo'), Node('/Udo/Marc'))
         """
-        if not self.parent:
+        if self.parent is None:
             return tuple()
         return self.parent.path
 
@@ -399,7 +399,7 @@ class NodeMixin(persistent.Persistent):
         Node('/Udo')
         """
         node = self
-        while node.parent:
+        while node.parent is not None:
             node = node.parent
         return node
 
@@ -427,7 +427,7 @@ class NodeMixin(persistent.Persistent):
         if parent is None:
             return tuple()
         else:
-            return tuple(node for node in parent.children if node != self)
+            return tuple(node for node in parent.children if node is not self)
 
     @property
     def leaves(self):
@@ -463,7 +463,7 @@ class NodeMixin(persistent.Persistent):
         >>> lian.is_leaf
         True
         """
-        return len(self.__children_) == 0
+        return len(self.__children_or_empty) == 0
 
     @property
     def is_root(self):
@@ -499,8 +499,9 @@ class NodeMixin(persistent.Persistent):
         >>> lian.height
         0
         """
-        if self.__children_:
-            return max(child.height for child in self.__children_) + 1
+        children = self.__children_or_empty
+        if children:
+            return max(child.height for child in children) + 1
         else:
             return 0
 
@@ -520,6 +521,7 @@ class NodeMixin(persistent.Persistent):
         >>> lian.depth
         2
         """
+        # count without storing the entire path
         for i, _ in enumerate(self.iter_path_reverse()):
             continue
         return i
